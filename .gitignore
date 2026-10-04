@@ -1,0 +1,38 @@
+# Virtual Environment
+venv/
+.venv/
+env/
+ENV/
+
+# Python Cache & Build Artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+
+# Environment Variables & Keys
+.env
+.env.local
+
+# Database Files
+*.db
+*.sqlite3
+meetmemo.db
+outputs/meetmemo.db
+
+# Whisper Models & Large Downloads
+models/whisper/models--*
+
+# Temporary Audio Outputs & Reports
+outputs/transcripts/*.wav
+outputs/transcripts/*.mp3
+outputs/transcripts/*.webm
+outputs/transcripts/upload_*
+outputs/mom/*.md
+
+# IDE & Operating System Files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

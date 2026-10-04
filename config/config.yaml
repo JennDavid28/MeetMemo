@@ -1,0 +1,39 @@
+project:
+  name: MeetMemo
+  version: 1.0.0
+  supported_languages:
+    - English
+    - Hinglish
+
+audio:
+  supported_formats:
+    - wav
+    - mp3
+    - m4a
+    - flac
+    - mp4
+
+speech:
+  model: whisper
+
+diarization:
+  enabled: true
+
+nlp:
+  ner: true
+  keywords: true
+  topics: true
+  sentiment: true
+  emotion: true
+  intent: true
+  actions: true
+  decisions: true
+  motions: true
+
+llm:
+  provider: openai
+  model: gpt-4o-mini
+  temperature: 0.2
+
+mom:
+  enabled: true

@@ -1,0 +1,15 @@
+Identify any formal motions, proposals, seconds, and vote outcomes in the transcript below.
+
+LOOK FOR:
+- Proposals ("I propose...", "I move that...")
+- Seconds ("I second that...")
+- Votes ("All in favor?", "Approved", "Rejected")
+
+OUTPUT FORMAT:
+- Motion Text:
+- Proposed By:
+- Seconded By:
+- Result:
+
+If no formal parliamentary motions or votes took place, output:
+"No formal motions or votes identified."

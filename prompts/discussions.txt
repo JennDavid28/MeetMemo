@@ -1,0 +1,9 @@
+Summarize the key discussion points from the following conversation.
+
+CONSTRAINTS:
+- Do not reproduce the full verbatim transcript.
+- Convert multi-turn dialogue into factual, concise bullet points grouped by topic.
+- Maintain accurate speaker attribution where important.
+
+TRANSCRIPT:
+{transcript}

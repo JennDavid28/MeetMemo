@@ -1,0 +1,18 @@
+Extract all actionable tasks assigned during the meeting.
+
+RULES:
+- Extract the task name, owner (person assigned), and deadline.
+- If owner or deadline is unmentioned, set them as "Not specified".
+
+FORMAT EACH ITEM AS JSON:
+[
+  {
+    "task": "Task description",
+    "owner": "Person name",
+    "deadline": "Deadline or Not specified",
+    "status": "Pending"
+  }
+]
+
+TRANSCRIPT:
+{transcript}

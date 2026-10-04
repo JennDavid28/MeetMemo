@@ -1,0 +1,8 @@
+Extract all UNRESOLVED QUESTIONS from the transcript below.
+
+RULES:
+- Identify questions asked by participants that were left unanswered, deferred, or flagged for follow-up.
+- Do NOT include questions that were answered within the conversation.
+
+TRANSCRIPT:
+{transcript}

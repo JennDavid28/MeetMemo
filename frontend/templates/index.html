@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MeetMemo — AI Conversation Intelligence</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="icon" type="image/svg+xml" href="/static/assets/favicon.svg">
+</head>
+
+<body>
+
+    <!-- 1. LOGIN OVERLAY MODAL -->
+    <div id="loginOverlay">
+        <div class="login-card text-center">
+            <div class="d-flex justify-content-center align-items-center gap-2 mb-2">
+                <h4 class="fw-bold mb-0 text-dark">MeetMemo</h4>
+            </div>
+            <p class="text-secondary extra-small mb-3">Turn meetings into clear insights</p>
+            <form id="loginForm">
+                <div class="mb-2 text-start">
+                    <label class="form-label extra-small text-secondary fw-semibold mb-1">Full Name</label>
+                    <input type="text" id="loginName" class="form-control form-control-sm" placeholder="Jennica David" required>
+                </div>
+                <div class="mb-2 text-start">
+                    <label class="form-label extra-small text-secondary fw-semibold mb-1">Email Address</label>
+                    <input type="email" id="loginEmail" class="form-control form-control-sm" placeholder="davidjennica1@gmail.com" required>
+                </div>
+                <div class="mb-2 text-start">
+                    <label class="form-label extra-small text-secondary fw-semibold mb-1">Job Role / Designation</label>
+                    <input type="text" id="loginRole" class="form-control form-control-sm" placeholder="AI Engineer / Product Manager" required>
+                </div>
+                <div class="mb-3 text-start">
+                    <label class="form-label extra-small text-secondary fw-semibold mb-1">Password</label>
+                    <input type="password" id="loginPassword" class="form-control form-control-sm" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn btn-primary btn-sm w-100 py-2 fw-semibold rounded-2">Enter Workspace</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 2. USER PROFILE DETAILS MODAL -->
+    <div class="modal fade" id="userProfileModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg rounded-4">
+                <div class="modal-header border-bottom-0 pb-0">
+                    <h5 class="modal-title fw-bold text-dark">Account Profile & Intelligence</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body pt-3">
+                    <div class="p-3 bg-light rounded-3 border mb-3 d-flex align-items-center gap-3">
+                        <div class="user-avatar fs-5 fw-bold" id="modalUserAvatar" style="width: 48px; height: 48px;">JD</div>
+                        <div>
+                            <h6 class="fw-bold mb-0 text-dark" id="modalUserName">Jennica David</h6>
+                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle extra-small mt-1" id="modalUserRole">Product Manager</span>
+                            <div class="extra-small text-secondary mt-1" id="modalUserEmail">davidjennica1@gmail.com</div>
+                        </div>
+                    </div>
+
+                    <div class="row g-2 mb-3 text-center">
+                        <div class="col-6">
+                            <div class="p-2.5 bg-light border rounded-3">
+                                <div class="text-secondary extra-small fw-semibold text-uppercase">Meetings Saved</div>
+                                <h5 class="fw-bold text-dark mb-0 mt-1" id="modalTotalMeetings">0</h5>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-2.5 bg-light border rounded-3">
+                                <div class="text-secondary extra-small fw-semibold text-uppercase">Total Processed</div>
+                                <h5 class="fw-bold text-primary mb-0 mt-1" id="modalTotalDuration">0 Active</h5>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="extra-small fw-bold text-secondary text-uppercase mb-1">Processed Meeting Activity Log</label>
+                        <div id="modalMeetingHistoryList" class="border rounded-3 p-2 bg-white overflow-auto vstack gap-2" style="max-height: 140px;">
+                            <div class="text-muted extra-small italic text-center py-2">No meeting activity logs recorded.</div>
+                        </div>
+                    </div>
+
+                    <div class="accordion accordion-flush border rounded-3 overflow-hidden mb-3" id="passwordAccordion">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed extra-small fw-semibold py-2 bg-light text-dark" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapsePassword">
+                                    Change Password
+                                </button>
+                            </h2>
+                            <div id="flush-collapsePassword" class="accordion-collapse collapse" data-bs-parent="#passwordAccordion">
+                                <div class="accordion-body p-3">
+                                    <div class="mb-2">
+                                        <input type="password" id="newPasswordInput" class="form-control form-control-sm" placeholder="Enter new password">
+                                    </div>
+                                    <button id="btnUpdatePassword" class="btn btn-dark btn-sm w-100">Update Password</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer border-top-0 pt-0">
+                    <button type="button" id="btnLogout" class="btn btn-outline-danger btn-sm w-100 fw-semibold">Log Out</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. MAIN APP CONTAINER (3-COLUMN FLEXBOX LAYOUT) -->
+    <div class="app-container">
+
+        <!-- COLUMN 1: LEFT SIDEBAR -->
+        <div class="left-sidebar">
+            <div class="brand-title">
+                MeetMemo
+            </div>
+
+            <div class="sidebar-label">INPUT</div>
+            <button class="sidebar-nav-btn active" data-pane="pane-record">
+                <span></span> Record Audio
+            </button>
+            <button class="sidebar-nav-btn" data-pane="pane-paste">
+                <span></span> Paste Dialogue
+            </button>
+            <button class="sidebar-nav-btn" data-pane="pane-upload">
+                <span></span> Upload File
+            </button>
+
+            <div class="sidebar-label">FEATURES</div>
+            <button class="sidebar-nav-btn" data-feature="transcript">
+                <span></span> Transcript
+            </button>
+            <button class="sidebar-nav-btn" data-feature="nlp">
+                <span></span> NLP Analysis
+            </button>
+            <button class="sidebar-nav-btn" data-feature="summary">
+                <span></span> Summary
+            </button>
+            <button class="sidebar-nav-btn" data-feature="mom">
+                <span></span> Minutes of Meeting
+            </button>
+
+            <div class="sidebar-label">STORAGE</div>
+            <button class="sidebar-nav-btn" id="btnOpenSavedDrive">
+                <span></span> Saved Files
+            </button>
+
+            <!-- USER PROFILE BADGE -->
+            <div class="user-profile-badge mt-auto" id="userProfileBadge" style="cursor: pointer;">
+                <div class="user-avatar" id="avatarInitials">--</div>
+                <div class="overflow-hidden">
+                    <div class="fw-bold text-white extra-small text-truncate" id="profileDisplayName">Guest User</div>
+                    <div class="extra-small text-secondary text-truncate" id="profileDisplayEmail">user@example.com</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- COLUMN 2: CENTER STAGE CANVAS -->
+        <div class="main-stage">
+            <div class="hero-header">
+                <div>
+                    <h4 class="fw-bold text-dark mb-1" id="greetingHeader">Welcome</h4>
+                    <p class="text-secondary extra-small mb-0">Turn your meetings into clear insights.</p>
+                </div>
+            </div>
+
+            <div id="stageCanvas" class="flex-grow-1 d-flex flex-column gap-3 mb-3">
+
+                <!-- RECORD CANVAS -->
+                <div id="pane-record" class="stage-pane recording-canvas flex-grow-1">
+                    <div id="micCircleBtn" class="mic-wave-container mb-3">REC</div>
+                    <h5 class="fw-bold text-dark mb-1" id="recordStatusTitle">Ready to record</h5>
+                    <p class="text-secondary extra-small mb-3" id="recordStatusSubtitle">Click the microphone to start recording your meeting.</p>
+                    <div class="badge bg-light text-secondary border px-3 py-1.5 rounded-pill fw-normal extra-small">
+                        <span id="recordTimer">Click mic to record</span>
+                    </div>
+                </div>
+
+                <!-- PASTE CANVAS -->
+                <div id="pane-paste" class="stage-pane flex-grow-1 d-none text-start align-items-stretch p-3">
+                    <h6 class="fw-bold mb-2">Paste Conversation Transcript</h6>
+                    <textarea id="pasteTextInput" class="form-control form-control-sm border-secondary mb-3 flex-grow-1" style="min-height: 200px;" placeholder="Speaker 1: Hello team...\nSpeaker 2: Let's review..."></textarea>
+                    <button id="btnProcessPaste" class="btn btn-primary btn-sm w-100">Process Text</button>
+                </div>
+
+                <!-- UPLOAD CANVAS -->
+                <div id="pane-upload" class="stage-pane flex-grow-1 d-none p-3 text-center">
+                    <h6 class="fw-bold mb-2">Upload Audio or Transcript File</h6>
+                    <input class="form-control form-control-sm mb-3 w-75 mx-auto" type="file" id="fileInput">
+                    <button id="btnProcessUpload" class="btn btn-primary btn-sm w-75">Upload & Analyze</button>
+                </div>
+
+                <!-- FEATURE CANVAS -->
+                <div id="pane-feature" class="stage-pane flex-grow-1 d-none text-start align-items-stretch p-3">
+                    <div id="featureTitleHeader">
+                        <h6 id="featureTitle" class="fw-bold text-dark mb-0">Feature View</h6>
+                        <div id="featureActions" class="d-none gap-2 align-items-center">
+                            <input type="text" id="saveMeetingNameInput" class="form-control form-control-sm" placeholder="Meeting Title">
+                            <button id="btnSaveMoM" class="btn btn-success btn-sm px-2">Save</button>
+                            <button id="btnExportPDF" class="btn btn-outline-danger btn-sm px-2">PDF</button>
+                            <button id="btnExportDOCX" class="btn btn-outline-primary btn-sm px-2">DOCX</button>
+                            <button id="btnExportTXT" class="btn btn-outline-secondary btn-sm px-2">TXT</button>
+                        </div>
+                    </div>
+                    <div id="featureContent" class="text-secondary extra-small"></div>
+                </div>
+
+            </div>
+
+            <!-- RECENT RECORDING DOCK -->
+            <div id="recentRecordingDock" class="recent-card d-flex align-items-center justify-content-between d-none">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="fs-5 text-primary"></span>
+                    <div>
+                        <div class="fw-semibold extra-small text-dark" id="recentTitle">Recorded Session</div>
+                        <div class="extra-small text-secondary" id="recentSubtitle">Ready to process</div>
+                    </div>
+                </div>
+
+                <div id="audioPreviewContainer" class="me-2" style="min-width: 220px;">
+                    <audio id="audioPreview" controls class="w-100" style="height: 32px;"></audio>
+                </div>
+
+                <button id="btnProcessRecord" class="btn btn-primary btn-sm px-3 rounded-2">Process Recording</button>
+            </div>
+        </div>
+
+        <!-- COLUMN 3: RIGHT SIDEBAR -->
+        <div class="right-sidebar">
+            <h6 class="fw-bold mb-0 text-dark extra-small text-uppercase tracking-wide">YOUR SAVED MEETINGS</h6>
+
+            <div class="vstack gap-2 overflow-auto" id="savedMeetingsList" style="max-height: 220px;">
+                <div class="text-secondary extra-small italic py-1">No meetings saved yet.</div>
+            </div>
+
+            <!-- GROUNDED AI Q&A ASSISTANT -->
+            <div class="ai-qa-card mt-auto">
+                <div class="d-flex align-items-center gap-1.5 mb-1.5">
+                    <span class="fs-6 text-primary"></span>
+                    <h6 class="fw-bold mb-0 text-dark extra-small">Ask AI Assistant</h6>
+                </div>
+                <p class="extra-small text-secondary mb-2">Ask questions about your active or saved meetings.</p>
+
+                <div id="qaBox" class="vstack gap-2">
+                    <div id="qaAnswersContainer" class="extra-small text-dark overflow-auto mb-1" style="max-height: 120px; font-size: 0.78rem;"></div>
+                    <div class="input-group input-group-sm">
+                        <input type="text" id="qaQuestionInput" class="form-control border-0 extra-small" placeholder="Ask AI a question...">
+                        <button id="btnAskQA" class="btn btn-primary btn-sm px-2">Ask</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- SCRIPTS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://unpkg.com/docx@7.8.2/build/index.js"></script>
+    <script src="/static/js/recorder.js"></script>
+    <script src="/static/js/dashboard.js"></script>
+</body>
+
+</html>

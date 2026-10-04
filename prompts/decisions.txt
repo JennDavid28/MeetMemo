@@ -1,0 +1,9 @@
+Extract all CONFIRMED DECISIONS made in the meeting transcript below.
+
+RULES:
+- A decision is a firm agreement or commitment ("We will use FastAPI"), NOT a suggestion ("Maybe we should try FastAPI").
+- Format as bullet points detailing the decision and who agreed.
+- If no firm decisions were finalized, output: "No formal decisions were reached."
+
+TRANSCRIPT:
+{transcript}
