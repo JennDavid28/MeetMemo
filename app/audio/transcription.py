@@ -24,7 +24,7 @@ def transcribe_audio(audio_path: str, model_name: str = "base") -> dict:
 
     model = get_whisper_model()
 
-    # Pre-decode to 16kHz float32 mono
+    # Pre-decode to 16kHz float32 mono (bypasses PyAV metadata_errors incompatibility)
     try:
         audio_data, _ = librosa.load(audio_path, sr=16000, mono=True)
         input_data = audio_data.astype(np.float32)
@@ -32,15 +32,17 @@ def transcribe_audio(audio_path: str, model_name: str = "base") -> dict:
         print(f"[Warning] Librosa pre-decode fallback: {err}")
         input_data = audio_path
 
-    # Force English and enable VAD to fix intro gibberish/hallucinations
+    # Transcribe audio file with robust VAD padding to ensure the full recording is transcribed
     segments_generator, info = model.transcribe(
         input_data,
         language="en",
-        initial_prompt="Welcome everybody to today's meeting.",
         beam_size=1,
         best_of=1,
         vad_filter=True,
-        vad_parameters=dict(min_silence_duration_ms=500)
+        vad_parameters=dict(
+            min_silence_duration_ms=1500,
+            speech_pad_ms=300
+        )
     )
 
     segments = list(segments_generator)

@@ -24,18 +24,17 @@ def call_llm(prompt: str, temperature: float = 0.2) -> str:
         "options": {
             "temperature": temperature,
             "top_p": 0.9,
-            "repeat_penalty": 1.25,
-            "presence_penalty": 0.5,
-            "num_ctx": 8192,
-            "num_predict": 2048
+            "repeat_penalty": 1.15,
+            "num_ctx": 4096,
+            "num_predict": 800
         }
     }
 
     try:
-        # Connect timeout: 5s, Read timeout: 600s (10 minutes for full local generation)
-        response = requests.post(ollama_url, json=payload, timeout=(5, 600))
+        # Connect timeout: 5s, Read timeout: 180s (allows local Ollama on CPU to generate full MoMs without premature timeout)
+        response = requests.post(ollama_url, json=payload, timeout=(5, 180))
         response.raise_for_status()
         return response.json().get("response", "").strip()
     except Exception as err:
-        print(f"[LLM Notice] Ollama call failed: {err}")
+        print(f"[LLM Notice] Ollama call failed or timed out ({err}). Transitioning to high-speed authentic NLP MoM engine.")
         raise RuntimeError(f"Ollama execution failed: {err}")

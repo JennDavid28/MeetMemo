@@ -26,25 +26,46 @@ def run_nlp_pipeline(transcript) -> NLPResults:
     utterances = transcript.utterances if hasattr(transcript, "utterances") else []
 
     # 1. DYNAMIC ACTION ITEM EXTRACTION FROM TRANSCRIPT UTTERANCES
-    action_triggers = [
-        "will", "need to", "going to", "action", "circulate", "send", "review", 
-        "deliver", "look into", "get back", "assign", "prepare", "complete", "submit"
+    action_patterns = [
+        r'\b(?:will|can|shall|going to)\s+(?:handle|add|improve|finish|prepare|validate|move|create|update|implement|fix|test|run|experiment|prioritize)\b',
+        r'\b(?:should have|have the .* ready|ready by|deadline|action item|task assignment)\b',
+        r'\b(?:need to|have to|must)\s+(?:complete|finalize|deliver|deploy|configure|filter)\b'
     ]
-    extracted_actions = []
+    greeting_pattern = r'^(?:good morning|good afternoon|hello|hi|thanks|perfect|great|let\'s start|today i want)\b'
     
+    extracted_actions = []
+    seen_actions = set()
+
     if utterances:
         for utt in utterances:
             utt_text = utt.text if hasattr(utt, "text") else str(utt)
             speaker = utt.speaker if hasattr(utt, "speaker") else "Participant"
-            if any(re.search(r'\b' + re.escape(trig) + r'\b', utt_text, re.IGNORECASE) for trig in action_triggers):
-                if len(utt_text.strip()) > 10:
-                    extracted_actions.append(f"{speaker}: {utt_text.strip()}")
+            # Split utterance into distinct sentences
+            sentences = re.split(r'(?<=[.!?])\s+', utt_text)
+            for s in sentences:
+                s_clean = s.strip()
+                if not s_clean or len(s_clean) < 15 or s_clean.endswith('?'):
+                    continue
+                # Skip greetings and general meeting opening phrases
+                if re.search(greeting_pattern, s_clean, re.IGNORECASE):
+                    continue
+                if any(re.search(pat, s_clean, re.IGNORECASE) for pat in action_patterns):
+                    item = f"{speaker}: {s_clean}"
+                    if item not in seen_actions:
+                        seen_actions.add(item)
+                        extracted_actions.append(item)
     else:
-        sentences = re.split(r'[.!?]\s+', text)
-        for sentence in sentences:
-            if any(re.search(r'\b' + re.escape(trig) + r'\b', sentence, re.IGNORECASE) for trig in action_triggers):
-                if len(sentence.strip()) > 10:
-                    extracted_actions.append(sentence.strip())
+        sentences = re.split(r'(?<=[.!?])\s+', text)
+        for s in sentences:
+            s_clean = s.strip()
+            if not s_clean or len(s_clean) < 15 or s_clean.endswith('?'):
+                continue
+            if re.search(greeting_pattern, s_clean, re.IGNORECASE):
+                continue
+            if any(re.search(pat, s_clean, re.IGNORECASE) for pat in action_patterns):
+                if s_clean not in seen_actions:
+                    seen_actions.add(s_clean)
+                    extracted_actions.append(s_clean)
 
     # 2. DYNAMIC KEYWORD EXTRACTION (TF-IDF via sklearn)
     dynamic_keywords = extract_keywords(text, top_n=10)

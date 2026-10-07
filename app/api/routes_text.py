@@ -16,24 +16,53 @@ async def process_pasted_text(payload: TextProcessRequest):
         raise HTTPException(status_code=400, detail="Text input cannot be empty.")
 
     lines = [line.strip() for line in raw_text.split("\n") if line.strip()]
-    utterances = []
+    parsed_lines = []
     
-    current_speaker = "Speaker 1"
-    
-    for i, line in enumerate(lines):
-        # 1. Check if line starts with an explicit speaker label (e.g. "Morgan:", "Alice -", "Speaker 2:")
-        match = re.match(r'^([^:\-\n]+)[:\-]\s*(.*)$', line)
-        if match:
-            speaker = match.group(1).strip()
-            text = match.group(2).strip()
-            current_speaker = speaker
+    # Check if lines have explicit speaker labels
+    has_any_speaker_prefix = False
+    for line in lines:
+        clean = re.sub(r'^[\[\(]?\d{1,2}:\d{2}(?::\d{2})?(?:\s*[AP]M)?[\]\)]?[\s\-:]*', '', line).strip()
+        m = re.match(r'^([^:\-\n]{1,40})[:\-]\s*(.*)$', clean)
+        if m and len(m.group(1).split()) <= 4:
+            has_any_speaker_prefix = True
+            parsed_lines.append((m.group(1).strip(), m.group(2).strip()))
         else:
-            # If no colon prefix, keep current speaker unless line represents a whole new paragraph
-            speaker = current_speaker
-            text = line
-            
+            parsed_lines.append((None, clean))
+
+    # If no speaker labels detected at all, detect conversational turns across paragraphs/lines
+    if not has_any_speaker_prefix:
+        utterances_data = []
+        turn_counter = 1
+        for i, (_, text) in enumerate(parsed_lines):
+            spk = f"Speaker {(i % 2) + 1}"  # Alternate Speaker 1 and Speaker 2 for dialogue turns
+            utterances_data.append((spk, text))
+    else:
+        # Fill forward current speaker when lines are continuation of dialogue
+        utterances_data = []
+        curr_spk = "Speaker 1"
+        for spk, text in parsed_lines:
+            if spk is not None:
+                curr_spk = spk
+            utterances_data.append((curr_spk, text))
+
+    # If generic Speaker labels (e.g. "Speaker 2", "Speaker 1") are used out of order,
+    # normalize them in strict chronological order of first appearance
+    all_generic = all(re.match(r'^Speaker\s+\d+$', spk, re.IGNORECASE) for spk, _ in utterances_data)
+    if all_generic:
+        speaker_map = {}
+        counter = 1
+        normalized_data = []
+        for spk, text in utterances_data:
+            if spk not in speaker_map:
+                speaker_map[spk] = f"Speaker {counter}"
+                counter += 1
+            normalized_data.append((speaker_map[spk], text))
+        utterances_data = normalized_data
+
+    utterances = []
+    for i, (speaker, text) in enumerate(utterances_data):
         utterances.append({
-            "speaker": speaker, 
+            "speaker": speaker,
             "text": text,
             "start_time": float(i * 10),
             "end_time": float((i + 1) * 10)

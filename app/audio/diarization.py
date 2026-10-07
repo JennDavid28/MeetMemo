@@ -3,12 +3,14 @@ import numpy as np
 import librosa
 from typing import List, Dict, Any
 from sklearn.cluster import AgglomerativeClustering
+from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import silhouette_score
 
 def run_diarization(audio_path: str, hf_token: str = None, whisper_segments: List[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
     """
     Runs speaker diarization using pyannote.audio if available/authenticated.
-    Falls back to MFCC feature clustering on audio segments for fast multi-speaker detection.
+    Falls back to robust acoustic voice timbre clustering on audio segments for multi-speaker detection.
+    Guarantees strict chronological speaker numbering (Speaker 1 speaks first, Speaker 2 second, etc.).
     """
     token = hf_token or os.getenv("HUGGINGFACE_TOKEN")
     
@@ -24,7 +26,9 @@ def run_diarization(audio_path: str, hf_token: str = None, whisper_segments: Lis
             speaker_map = {}
             speaker_count = 1
             
-            for turn, _, speaker in diarization.itertracks(yield_label=True):
+            # Sort turns strictly chronologically by start time
+            tracks = sorted(diarization.itertracks(yield_label=True), key=lambda x: x[0].start)
+            for turn, _, speaker in tracks:
                 if speaker not in speaker_map:
                     speaker_map[speaker] = f"Speaker {speaker_count}"
                     speaker_count += 1
@@ -40,7 +44,7 @@ def run_diarization(audio_path: str, hf_token: str = None, whisper_segments: Lis
         except Exception as e:
             print(f"[Notice] Pyannote Diarization Warning: {e}. Falling back to acoustic feature clustering.")
 
-    # 2. Smart Fallback: Acoustic Voice Timbre (MFCC) Clustering
+    # 2. Smart Fallback: Acoustic Voice Timbre Clustering
     print("[INFO] Running Acoustic Voice Timbre Diarization (Multi-Speaker Detection)...")
     if whisper_segments:
         return run_acoustic_diarization(audio_path, whisper_segments)
@@ -72,6 +76,7 @@ def run_acoustic_diarization(audio_path: str, whisper_segments: List[Dict[str, A
             if len(chunk) < 1600:  # less than 0.1s audio
                 continue
 
+            # Extract 13 MFCCs mean and standard deviation
             mfcc = librosa.feature.mfcc(y=chunk, sr=sr, n_mfcc=13)
             feat = np.hstack([np.mean(mfcc, axis=1), np.std(mfcc, axis=1)])
             features.append(feat)
@@ -80,7 +85,11 @@ def run_acoustic_diarization(audio_path: str, whisper_segments: List[Dict[str, A
         if len(features) < 2:
             return [{"speaker": "Speaker 1", "start": seg.get("start", 0.0), "end": seg.get("end", 0.0)} for seg in whisper_segments]
 
-        X = np.array(features)
+        # Standardize features so loudness does not bias acoustic timbre clustering
+        X_raw = np.array(features)
+        scaler = StandardScaler()
+        X = scaler.fit_transform(X_raw)
+
         best_k = 1
         best_score = -1.0
 
@@ -93,17 +102,30 @@ def run_acoustic_diarization(audio_path: str, whisper_segments: List[Dict[str, A
                     best_score = score
                     best_k = k
 
-        if best_k > 1 and best_score > 0.02:
+        # If significant clustering detected or multiple distinct turns, apply optimal k
+        if best_k > 1 and best_score > 0.01:
             labels = AgglomerativeClustering(n_clusters=best_k).fit_predict(X)
         else:
             labels = [0] * len(features)
 
+        # STRICT CHRONOLOGICAL SPEAKER MAPPING
+        # Map clusters to Speaker 1, Speaker 2, ... in order of their FIRST time appearance
+        sorted_indices = sorted(range(len(valid_indices)), key=lambda i: whisper_segments[valid_indices[i]].get("start", 0.0))
+        cluster_to_speaker = {}
+        speaker_counter = 1
+
+        for idx in sorted_indices:
+            cid = labels[idx]
+            if cid not in cluster_to_speaker:
+                cluster_to_speaker[cid] = f"Speaker {speaker_counter}"
+                speaker_counter += 1
+
         result_segments = []
         for feat_idx, seg_idx in enumerate(valid_indices):
             seg = whisper_segments[seg_idx]
-            spk_num = labels[feat_idx] + 1
+            assigned_speaker = cluster_to_speaker.get(labels[feat_idx], "Speaker 1")
             result_segments.append({
-                "speaker": f"Speaker {spk_num}",
+                "speaker": assigned_speaker,
                 "start": seg.get("start", 0.0),
                 "end": seg.get("end", 0.0)
             })
@@ -120,5 +142,5 @@ def run_acoustic_diarization(audio_path: str, whisper_segments: List[Dict[str, A
         return result_segments
 
     except Exception as err:
-        print(f"[Acoustic Diarization Warning] {err}. Defaulting to Speaker 1.")
+        print(f"[Acoustic Diarization Warning] {err}. Defaulting to chronological Speaker 1.")
         return [{"speaker": "Speaker 1", "start": seg.get("start", 0.0), "end": seg.get("end", 0.0)} for seg in whisper_segments]

@@ -10,24 +10,49 @@ from app.llm.mom_generator import generate_mom_llm
 
 def parse_pasted_text_to_utterances(raw_text: str) -> List[Utterance]:
     """
-    Parses lines in format 'Speaker 1: Hello' into structured Utterance models.
+    Parses lines in format 'Speaker 1: Hello' or '[00:15] Speaker 1: Hello' into structured Utterance models.
+    Guarantees chronological speaker order and detects conversational turns when no speaker labels exist.
     """
-    utterances = []
-    lines = raw_text.strip().split("\n")
+    import re
+    lines = [line.strip() for line in raw_text.strip().split("\n") if line.strip()]
+    if not lines:
+        return []
+
+    parsed_lines = []
+    has_any_prefix = False
+
     for line in lines:
-        line = line.strip()
-        if not line:
-            continue
-        if ":" in line:
-            parts = line.split(":", 1)
-            speaker = parts[0].strip()
-            text = parts[1].strip()
+        clean = re.sub(r'^[\[\(]?\d{1,2}:\d{2}(?::\d{2})?(?:\s*[AP]M)?[\]\)]?[\s\-:]*', '', line).strip()
+        m = re.match(r'^([^:\-\n]{1,40})[:\-]\s*(.*)$', clean)
+        if m and len(m.group(1).split()) <= 4:
+            has_any_prefix = True
+            parsed_lines.append((m.group(1).strip(), m.group(2).strip()))
         else:
-            speaker = "Speaker 1"
-            text = line
-            
-        utterances.append(Utterance(speaker=speaker, text=text))
-    return utterances
+            parsed_lines.append((None, clean))
+
+    if not has_any_prefix:
+        utterances_data = [(f"Speaker {(i % 2) + 1}", text) for i, (_, text) in enumerate(parsed_lines)]
+    else:
+        utterances_data = []
+        curr = "Speaker 1"
+        for spk, text in parsed_lines:
+            if spk is not None:
+                curr = spk
+            utterances_data.append((curr, text))
+
+    # If generic Speaker labels out of order, normalize chronologically
+    if all(re.match(r'^Speaker\s+\d+$', spk, re.IGNORECASE) for spk, _ in utterances_data):
+        spk_map = {}
+        cnt = 1
+        normalized = []
+        for spk, text in utterances_data:
+            if spk not in spk_map:
+                spk_map[spk] = f"Speaker {cnt}"
+                cnt += 1
+            normalized.append((spk_map[spk], text))
+        utterances_data = normalized
+
+    return [Utterance(speaker=spk, text=txt) for spk, txt in utterances_data]
 
 def run_text_pipeline(raw_text: str, meeting_id: str = None) -> Dict[str, Any]:
     """

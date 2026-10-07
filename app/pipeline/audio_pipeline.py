@@ -111,9 +111,17 @@ def run_audio_pipeline(input_audio_path: str, hf_token: str = None) -> Dict[str,
     
     print("Step 5/5: Generating MoM with LLM...")
     
+    speaker_transcript_lines = []
+    for utt in utterances:
+        spk = getattr(utt, 'speaker', 'Speaker 1')
+        txt = getattr(utt, 'text', '').strip()
+        if txt:
+            speaker_transcript_lines.append(f"{spk}: {txt}")
+    transcript_with_speakers = "\n\n".join(speaker_transcript_lines) if speaker_transcript_lines else full_text
+
     MAX_CHUNK_SIZE = 25000
-    if len(full_text) > MAX_CHUNK_SIZE:
-        chunks = [full_text[i:i+MAX_CHUNK_SIZE] for i in range(0, len(full_text), MAX_CHUNK_SIZE)]
+    if len(transcript_with_speakers) > MAX_CHUNK_SIZE:
+        chunks = [transcript_with_speakers[i:i+MAX_CHUNK_SIZE] for i in range(0, len(transcript_with_speakers), MAX_CHUNK_SIZE)]
         mom_outputs = []
         for idx, chunk in enumerate(chunks):
             print(f"Generating MoM chunk {idx+1}/{len(chunks)}...")
@@ -121,7 +129,7 @@ def run_audio_pipeline(input_audio_path: str, hf_token: str = None) -> Dict[str,
             mom_outputs.append(section_mom)
         raw_mom_output = "\n\n---\n\n".join(mom_outputs)
     else:
-        raw_mom_output = generate_mom_llm(full_text, nlp_summary_str)
+        raw_mom_output = generate_mom_llm(transcript_with_speakers, nlp_summary_str)
 
     if os.path.exists(processed_wav_path) and processed_wav_path != input_audio_path:
         try:
