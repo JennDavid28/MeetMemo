@@ -241,7 +241,7 @@ This project was developed as an individual solo project fulfilling all prescrib
    - Faster-Whisper ASR optimized with `int8` quantization and VAD silence filtering.
    - Resilient LLM timeout handling with dynamic NLP fallback to ensure 100% uptime.
 2. **Functionality and Implementation of LLM API**:
-   - Clean API interaction layer ([app/llm/client.py](file:///c:/Users/IVAN%20AJAY%20DAVID/Documents/GitHub/MeetMemo/app/llm/client.py)) with configurable parameters (`temperature`, `num_ctx`, `repeat_penalty`).
+   - Clean API interaction layer ([app/llm/client.py](MeetMemo/app/llm/client.py) with configurable parameters (`temperature`, `num_ctx`, `repeat_penalty`).
    - Context window expansion to 8,192 tokens allowing full-length transcript processing without fragmentation.
 3. **Effectiveness and Efficiency of Prompt Files**:
    - Dedicated prompt templates in `prompts/` enforcing executive structure, non-repetitive summaries, and strict Markdown formatting.
