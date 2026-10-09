@@ -1,6 +1,7 @@
 # MeetMemo — NLP-Based Conversation Intelligence & Executive MoM System
 
 MeetMemo is an advanced, end-to-end Natural Language Processing (NLP) and AI-powered Conversation Intelligence platform designed to transform raw meeting audio and dialogue transcripts into structured, executive-grade Minutes of Meeting (MoM), actionable insights, and grounded interactive Q&A.
+It is useful to capture and understand real time meetings and executive conversations.
 
 ---
 
@@ -223,7 +224,7 @@ python -m pytest tests/test_pipeline.py
 
 ## Academic Context & Evaluation Requirements Verification
 
-This project was developed as an individual solo project fulfilling all prescribed course requirements for NLP and LLM integration.
+This project was developed as an individual solo project under the guidance of Sandeep Gupta sir fulfilling all prescribed course requirements for NLP and LLM integration.
 
 ### Verification of Project Requirements
 
